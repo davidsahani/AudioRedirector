@@ -1,0 +1,9 @@
+<RCC>
+    <qresource prefix="/">
+        <file>styles/style.qss</file>
+        <file>icons/app.ico</file>
+        <file>icons/arrow-down.svg</file>
+        <file>icons/speaker.ico</file>
+        <file>icons/microphone.ico</file>
+    </qresource>
+</RCC>

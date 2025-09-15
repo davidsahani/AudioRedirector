@@ -1,0 +1,29 @@
+{
+    "version": 3,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 16
+    },
+    "configurePresets": [
+        {
+            "name": "qt-msvc",
+            "hidden": false,
+            "binaryDir": "${sourceDir}/build",
+            "cacheVariables": {
+                "CMAKE_PREFIX_PATH": "D:/Qt/6.9.0/msvc2022_64/lib/cmake"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "qt-msvc-debug",
+            "configurePreset": "qt-msvc",
+            "configuration": "Debug"
+        },
+        {
+            "name": "qt-msvc-release",
+            "configurePreset": "qt-msvc",
+            "configuration": "Release"
+        }
+    ]
+}
