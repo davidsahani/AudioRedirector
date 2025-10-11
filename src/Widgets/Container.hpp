@@ -1,15 +1,13 @@
 #pragma once
-#include <QWidget>
-#include <QLayout>
-#include <QSpacerItem>
-#include <initializer_list>
+#include <concepts>
 #include <variant>
 #include <type_traits>
-#include <concepts>
+#include <initializer_list>
+#include <optional>
 
-// Concept to ensure type is a QLayout (C++20)
-template <typename T>
-concept LayoutT = std::derived_from<T, QLayout>;
+#include <QWidget>
+#include <QBoxLayout>
+#include <QLayoutItem>
 
 struct Spacing {
 	int size;
@@ -19,27 +17,51 @@ struct Stretch {
 	int factor;
 };
 
-class ContainerItem {
-public:
-	using ItemVariant = std::variant<QWidget *, QLayout *, QSpacerItem *, Spacing, Stretch>;
+namespace _::internal {
+	// Concept to ensure type is a QLayout (C++20)
+	template <typename T>
+	concept LayoutT = std::derived_from<T, QLayout>;
 
-	ContainerItem(QWidget *w) : item(w) {}
-	ContainerItem(QLayout *l) : item(l) {}
-	ContainerItem(QSpacerItem *s) : item(s) {}
-	ContainerItem(Spacing sp) : item(sp) {}
-	ContainerItem(Stretch st) : item(st) {}
+	template <typename T>
+	concept BoxLayoutT = std::derived_from<T, QBoxLayout>;
 
-	const ItemVariant &get() const {
-		return item;
-	}
+	template <typename T>
+	concept WidgetT = std::derived_from<T, QWidget>;
 
-private:
-	ItemVariant item;
-};
+	class BoxLayoutItem {
+	public:
+		using ItemVariant = std::variant<QWidget *, QLayout *, QLayoutItem *, Spacing, Stretch>;
 
-template <typename LayoutT>
-LayoutT *Layout(std::initializer_list<ContainerItem> children, QWidget *parent = nullptr) {
-	LayoutT *layout = new LayoutT(parent);
+		BoxLayoutItem(QWidget *w) : item(w) {}
+		BoxLayoutItem(QLayout *l) : item(l) {}
+		BoxLayoutItem(QLayoutItem *i) : item(i) {}
+		BoxLayoutItem(Spacing sp) : item(sp) {}
+		BoxLayoutItem(Stretch st) : item(st) {}
+
+		const ItemVariant &get() const { return item; }
+
+	private:
+		ItemVariant item;
+	};
+}
+
+namespace _::internal {
+	struct LayoutArgs {
+		std::optional<QString> objectName = std::nullopt;
+		std::optional<Qt::Alignment> alignment = std::nullopt;
+		std::optional<QBoxLayout::Direction> direction = std::nullopt;
+		std::optional<QLayout::SizeConstraint> sizeConstraint = std::nullopt;
+		std::optional<QMargins> contentsMargins = std::nullopt;
+		std::optional<int> spacing = std::nullopt;
+		std::optional<int> stretch = std::nullopt;
+		QWidget* parent = nullptr;
+		std::initializer_list<_::internal::BoxLayoutItem> children;
+	};
+}
+
+template <_::internal::BoxLayoutT T>
+T *Layout(std::initializer_list<_::internal::BoxLayoutItem> children, QWidget *parent = nullptr) {
+	T *layout = new T(parent);
 
 	for (auto &child : children) {
 		std::visit(
@@ -65,40 +87,56 @@ LayoutT *Layout(std::initializer_list<ContainerItem> children, QWidget *parent =
 	return layout;
 }
 
-template <LayoutT LayoutType>
+template <_::internal::BoxLayoutT T>
+T *Layout(const _::internal::LayoutArgs &args) {
+	T *layout = Layout<T>(args.children, args.parent);
+
+	if (args.objectName.has_value()) {
+		layout->setObjectName(args.objectName.value());
+	}
+	if (args.alignment.has_value()) {
+		layout->setAlignment(args.alignment.value());
+	}
+	if (args.direction.has_value()) {
+		layout->setDirection(args.direction.value());
+	}
+	if (args.sizeConstraint.has_value()) {
+		layout->setSizeConstraint(args.sizeConstraint.value());
+	}
+	if (args.contentsMargins.has_value()) {
+		layout->setContentsMargins(args.contentsMargins.value());
+	}
+	if (args.spacing.has_value()) {
+		layout->setSpacing(args.spacing.value());
+	}
+	if (args.stretch.has_value()) {
+		layout->setStretchFactor(layout, args.stretch.value());
+	}
+	return layout;
+}
+
+template <_::internal::BoxLayoutT T>
 class Container : public QWidget {
 public:
-	Container(std::initializer_list<ContainerItem> children, QWidget *parent = nullptr)
+	Container(std::initializer_list<_::internal::BoxLayoutItem> children, QWidget *parent = nullptr)
 		: QWidget(parent)
 	{
-		m_layout = Layout<LayoutType>(children, this);
+		m_layout = Layout<T>(children, this);
 		this->setLayout(m_layout);
 	}
 
-	LayoutType *getLayout() const { return m_layout; }
-
-	Container<LayoutType> *setLayoutSpacing(int spacing) {
-		m_layout->setSpacing(spacing);
-		return this;
+	Container(_::internal::LayoutArgs args)
+		: QWidget(args.parent)
+	{
+		args.parent = this;
+		m_layout = Layout<T>(args);
+		this->setLayout(m_layout);
 	}
 
-	Container<LayoutType> *setLayoutAlignment(Qt::Alignment alignment) {
-		m_layout->setAlignment(alignment);
-		return this;
-	}
-
-	Container<LayoutType> *setLayoutContentMargins(int left, int top, int right, int bottom) {
-		m_layout->setContentsMargins(left, top, right, bottom);
-		return this;
-	}
-
-	Container<LayoutType> *setLayoutContentMargins(const QMargins &margins) {
-		m_layout->setContentsMargins(margins);
-		return this;
-	}
+	T *getLayout() const { return m_layout; }
 
 private:
-	LayoutType *m_layout;
+	T *m_layout;
 };
 
 // -------------------------------
@@ -106,11 +144,18 @@ private:
 // -------------------------------
 
 template <typename T>
-T *Margins(T *obj, const QMargins &margins)
-	requires requires(T *t, const QMargins &m) {
-		{ t->setContentsMargins(m) };
-	}
+T *Margins(const QMargins &margins, T *obj)
+    requires requires(T *t, const QMargins &m) {
+        { t->setContentsMargins(m) };
+    }
 {
-	obj->setContentsMargins(margins);
-	return obj;
+    obj->setContentsMargins(margins);
+    return obj;
+}
+
+template <_::internal::WidgetT T>
+T *SizePolicy(T *widget, QSizePolicy::Policy hor, QSizePolicy::Policy ver)
+{
+    widget->setSizePolicy(hor, ver);
+	return widget;
 }

@@ -56,41 +56,44 @@ static Container<QVBoxLayout> *createMainUI(
     _Out_ QPushButton *&startButton
 ) {
     return new Container<QVBoxLayout>({
-        Margins(inputLabel, QMargins(4, 0, 0, 2)),
+        Margins(QMargins(4, 0, 0, 2), inputLabel),
         inputDropdown = new QComboBox(),
         Spacing(5),
         Margins(
-            new QLabel("Select Output Playback Device:"),
-            /*margins=*/ QMargins(4, 0, 0, 2)
+            /*margins=*/ QMargins(4, 0, 0, 2),
+            new QLabel("Select Output Playback Device:")
         ),
         outputDropdown = new QComboBox(),
         Spacing(15),
-        Margins(Layout<QVBoxLayout>({
-            Layout<QHBoxLayout>({
-                new QLabel("Sample Rate:"), 
-                sampleRateDropdown = new QComboBox()
-            }),
-            Layout<QHBoxLayout>({
-                new QLabel("Format:"), 
-                formatDropdown = new QComboBox()
-            }),
-            Layout<QHBoxLayout>({
-                new QLabel("Volume Boost:"),
-                volumeBoostDropdown = new QComboBox()
-            }),
-            Spacing(15),
-            Layout<QHBoxLayout>({
-                new QLabel("Volume:"),
-                [&]() {
-                    volumeSlider = new SmoothSlider(Qt::Horizontal);
-                    volumeSlider->setRange(0, 100);
-                    volumeSlider->setValue(100);
-                    volumeSlider->setSingleStep(2);
-                    return volumeSlider;
-                }(),
-                volumeLabel = new QLabel("100%")
-            }),
-        }), /*margins=*/ QMargins(5, 0, 0, 0)),
+        Layout<QVBoxLayout>({
+            .contentsMargins = QMargins(5, 0, 0, 0),
+            .children = {
+                Layout<QHBoxLayout>({
+                    new QLabel("Sample Rate:"), 
+                    sampleRateDropdown = new QComboBox()
+                }),
+                Layout<QHBoxLayout>({
+                    new QLabel("Format:"), 
+                    formatDropdown = new QComboBox()
+                }),
+                Layout<QHBoxLayout>({
+                    new QLabel("Volume Boost:"),
+                    volumeBoostDropdown = new QComboBox()
+                }),
+                Spacing(15),
+                Layout<QHBoxLayout>({
+                    new QLabel("Volume:"),
+                    [&]() {
+                        volumeSlider = new SmoothSlider(Qt::Horizontal);
+                        volumeSlider->setRange(0, 100);
+                        volumeSlider->setValue(100);
+                        volumeSlider->setSingleStep(2);
+                        return volumeSlider;
+                    }(),
+                    volumeLabel = new QLabel("100%")
+                }),
+            },
+        }),
         Spacing(15),
         Stretch(1), startButton = new QPushButton("Start")
     });
@@ -110,11 +113,10 @@ void MainWindow::setupMainUI() {
         group->addButton(m_captureButton);
 
         Container<QHBoxLayout> *container = new Container<QHBoxLayout>({
-            m_loopbackButton, m_captureButton
+            .alignment = Qt::AlignRight,
+            .children = { m_loopbackButton, m_captureButton }
         });
-
         container->setObjectName("InputModeContainer");
-        container->setLayoutAlignment(Qt::AlignRight);
         return container;
     }();
 
@@ -144,11 +146,13 @@ void MainWindow::setupMainUI() {
         m_captureUI.startButton
     );
 
-    loopbackUIContainer->setLayoutAlignment(Qt::AlignTop)
-        ->setLayoutContentMargins(10, 5, 10, 10);
+    QVBoxLayout *UIContainerlayout = loopbackUIContainer->getLayout();
+    UIContainerlayout->setAlignment(Qt::AlignTop);
+    UIContainerlayout->setContentsMargins(10, 5, 10, 10);
 
-    captureUIContainer->setLayoutAlignment(Qt::AlignTop)
-        ->setLayoutContentMargins(10, 5, 10, 10);
+    UIContainerlayout = captureUIContainer->getLayout();
+    UIContainerlayout->setAlignment(Qt::AlignTop);
+    UIContainerlayout->setContentsMargins(10, 5, 10, 10);
 
     m_stack = new QStackedLayout();
     m_stack->addWidget(loopbackUIContainer);
