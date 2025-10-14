@@ -17,8 +17,7 @@ struct Stretch {
 	int factor;
 };
 
-namespace _::internal {
-	// Concept to ensure type is a QLayout (C++20)
+namespace __internal {
 	template <typename T>
 	concept LayoutT = std::derived_from<T, QLayout>;
 
@@ -43,9 +42,7 @@ namespace _::internal {
 	private:
 		ItemVariant item;
 	};
-}
 
-namespace _::internal {
 	struct LayoutArgs {
 		std::optional<QString> objectName = std::nullopt;
 		std::optional<Qt::Alignment> alignment = std::nullopt;
@@ -54,15 +51,13 @@ namespace _::internal {
 		std::optional<QMargins> contentsMargins = std::nullopt;
 		std::optional<int> spacing = std::nullopt;
 		std::optional<int> stretch = std::nullopt;
-		QWidget* parent = nullptr;
-		std::initializer_list<_::internal::BoxLayoutItem> children;
+		QWidget *parent = nullptr;
+		std::initializer_list<__internal::BoxLayoutItem> children;
 	};
-}
+} // namespace __internal
 
-template <_::internal::BoxLayoutT T>
-T *Layout(std::initializer_list<_::internal::BoxLayoutItem> children, QWidget *parent = nullptr) {
-	T *layout = new T(parent);
-
+template <__internal::BoxLayoutT T>
+T *Layout(T *layout, std::initializer_list<__internal::BoxLayoutItem> children) {
 	for (auto &child : children) {
 		std::visit(
 			[&](auto &&ptr) {
@@ -87,75 +82,154 @@ T *Layout(std::initializer_list<_::internal::BoxLayoutItem> children, QWidget *p
 	return layout;
 }
 
-template <_::internal::BoxLayoutT T>
-T *Layout(const _::internal::LayoutArgs &args) {
-	T *layout = Layout<T>(args.children, args.parent);
+template <__internal::BoxLayoutT T>
+T *Layout(T *layout, const __internal::LayoutArgs &args) {
+	T *l = Layout<T>(layout, args.children);
 
 	if (args.objectName.has_value()) {
-		layout->setObjectName(args.objectName.value());
+		l->setObjectName(args.objectName.value());
 	}
 	if (args.alignment.has_value()) {
-		layout->setAlignment(args.alignment.value());
+		l->setAlignment(args.alignment.value());
 	}
 	if (args.direction.has_value()) {
-		layout->setDirection(args.direction.value());
+		l->setDirection(args.direction.value());
 	}
 	if (args.sizeConstraint.has_value()) {
-		layout->setSizeConstraint(args.sizeConstraint.value());
+		l->setSizeConstraint(args.sizeConstraint.value());
 	}
 	if (args.contentsMargins.has_value()) {
-		layout->setContentsMargins(args.contentsMargins.value());
+		l->setContentsMargins(args.contentsMargins.value());
 	}
 	if (args.spacing.has_value()) {
-		layout->setSpacing(args.spacing.value());
+		l->setSpacing(args.spacing.value());
 	}
 	if (args.stretch.has_value()) {
-		layout->setStretchFactor(layout, args.stretch.value());
+		l->setStretchFactor(l, args.stretch.value());
 	}
-	return layout;
+	return l;
 }
 
-template <_::internal::BoxLayoutT T>
-class Container : public QWidget {
-public:
-	Container(std::initializer_list<_::internal::BoxLayoutItem> children, QWidget *parent = nullptr)
-		: QWidget(parent)
-	{
-		m_layout = Layout<T>(children, this);
-		this->setLayout(m_layout);
-	}
-
-	Container(_::internal::LayoutArgs args)
-		: QWidget(args.parent)
-	{
-		args.parent = this;
-		m_layout = Layout<T>(args);
-		this->setLayout(m_layout);
-	}
-
-	T *getLayout() const { return m_layout; }
-
-private:
-	T *m_layout;
-};
-
-// -------------------------------
-// Widget helper functions
-// -------------------------------
-
-template <typename T>
-T *Margins(const QMargins &margins, T *obj)
-    requires requires(T *t, const QMargins &m) {
-        { t->setContentsMargins(m) };
-    }
-{
-    obj->setContentsMargins(margins);
-    return obj;
+template <__internal::BoxLayoutT T>
+T *Layout(const __internal::LayoutArgs &args) {
+	return Layout<T>(new T(args.parent), args);
 }
 
-template <_::internal::WidgetT T>
-T *SizePolicy(T *widget, QSizePolicy::Policy hor, QSizePolicy::Policy ver)
-{
-    widget->setSizePolicy(hor, ver);
+template <__internal::BoxLayoutT T>
+T *Layout(std::initializer_list<__internal::BoxLayoutItem> children) {
+	return Layout<T>(new T(), children);
+}
+
+template <__internal::BoxLayoutT T>
+T *Layout(QWidget *parent, std::initializer_list<__internal::BoxLayoutItem> children) {
+	return Layout<T>(new T(parent), children);
+}
+
+namespace __internal {
+	struct ContainerArgs {
+		std::optional<QString> objectName = std::nullopt;
+		std::optional<QSize> baseSize = std::nullopt;
+		std::optional<QSize> fixedSize = std::nullopt;
+		std::optional<int> fixedWidth = std::nullopt;
+		std::optional<int> fixedHeight = std::nullopt;
+		std::optional<QSize> minimumSize = std::nullopt;
+		std::optional<int> minimumWidth = std::nullopt;
+		std::optional<int> minimumHeight = std::nullopt;
+		std::optional<QSize> maximumSize = std::nullopt;
+		std::optional<int> maximumWidth = std::nullopt;
+		std::optional<int> maximumHeight = std::nullopt;
+		std::optional<QMargins> contentsMargins = std::nullopt;
+		std::optional<QSizePolicy> sizePolicy = std::nullopt;
+		std::optional<QString> tooltip = std::nullopt;
+		std::optional<int> tooltipDuration = std::nullopt;
+		QLayout *layout = nullptr; // Layout for container
+	};
+} // namespace __internal
+
+template <__internal::WidgetT T>
+T *Container(T *widget, const __internal::ContainerArgs &args) {
+	if (args.objectName.has_value()) {
+		widget->setObjectName(args.objectName.value());
+	}
+
+	if (args.baseSize.has_value()) {
+		widget->setBaseSize(args.baseSize.value());
+	}
+	if (args.fixedSize.has_value()) {
+		widget->setFixedSize(args.fixedSize.value());
+	}
+	if (args.fixedWidth.has_value()) {
+		widget->setFixedWidth(args.fixedWidth.value());
+	}
+	if (args.fixedHeight.has_value()) {
+		widget->setFixedHeight(args.fixedHeight.value());
+	}
+	if (args.minimumSize.has_value()) {
+		widget->setMinimumSize(args.minimumSize.value());
+	}
+	if (args.minimumWidth.has_value()) {
+		widget->setMinimumWidth(args.minimumWidth.value());
+	}
+	if (args.minimumHeight.has_value()) {
+		widget->setMinimumHeight(args.minimumHeight.value());
+	}
+	if (args.maximumSize.has_value()) {
+		widget->setMaximumSize(args.maximumSize.value());
+	}
+	if (args.maximumWidth.has_value()) {
+		widget->setMaximumWidth(args.maximumWidth.value());
+	}
+	if (args.maximumHeight.has_value()) {
+		widget->setMaximumHeight(args.maximumHeight.value());
+	}
+
+	if (args.contentsMargins.has_value()) {
+		widget->setContentsMargins(args.contentsMargins.value());
+	}
+	if (args.sizePolicy.has_value()) {
+		widget->setSizePolicy(args.sizePolicy.value());
+	}
+	if (args.tooltip.has_value()) {
+		widget->setToolTip(args.tooltip.value());
+	}
+	if (args.tooltipDuration.has_value()) {
+		widget->setToolTipDuration(args.tooltipDuration.value());
+	}
+
+	if (args.layout != nullptr) {
+		widget->setLayout(args.layout);
+	}
+
+	return widget;
+}
+
+template <__internal::WidgetT T>
+T *Container(T *widget, QLayout *layout) {
+	widget->setLayout(layout);
+	return widget;
+}
+
+template <__internal::BoxLayoutT T>
+QWidget *Container(__internal::LayoutArgs args) {
+	QWidget *widget = new QWidget(args.parent);
+	args.parent = widget;
+	T *layout = Layout<T>(args);
+	widget->setLayout(layout);
+	return widget;
+}
+
+template <__internal::BoxLayoutT T>
+QWidget *Container(std::initializer_list<__internal::BoxLayoutItem> children) {
+	QWidget *widget = new QWidget();
+	T *layout = Layout<T>(widget, children);
+	widget->setLayout(layout);
+	return widget;
+}
+
+template <__internal::BoxLayoutT T>
+QWidget *Container(QWidget *parent, std::initializer_list<__internal::BoxLayoutItem> children) {
+	QWidget *widget = new QWidget(parent);
+	T *layout = Layout<T>(children, widget);
+	widget->setLayout(layout);
 	return widget;
 }

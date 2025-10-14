@@ -44,7 +44,7 @@ MainWindow::~MainWindow() {
     AudioRedirector::Uninitialize();
 }
 
-static Container<QVBoxLayout> *createMainUI(
+static QWidget *createMainUI(
     _In_ QLabel *inputLabel,
     _Out_ QComboBox *&inputDropdown,
     _Out_ QComboBox *&outputDropdown,
@@ -55,14 +55,16 @@ static Container<QVBoxLayout> *createMainUI(
     _Out_ QLabel *&volumeLabel,
     _Out_ QPushButton *&startButton
 ) {
-    return new Container<QVBoxLayout>({
-        Margins(QMargins(4, 0, 0, 2), inputLabel),
+    return Container<QVBoxLayout>({
+        Container(inputLabel, {
+            .contentsMargins = QMargins(4, 0, 0, 2)
+        }),
         inputDropdown = new QComboBox(),
         Spacing(5),
-        Margins(
-            /*margins=*/ QMargins(4, 0, 0, 2),
-            new QLabel("Select Output Playback Device:")
-        ),
+        Container(
+            new QLabel("Select Output Playback Device:"), {
+            .contentsMargins = QMargins(4, 0, 0, 2)
+        }),
         outputDropdown = new QComboBox(),
         Spacing(15),
         Layout<QVBoxLayout>({
@@ -91,7 +93,7 @@ static Container<QVBoxLayout> *createMainUI(
                         return volumeSlider;
                     }(),
                     volumeLabel = new QLabel("100%")
-                }),
+                })
             },
         }),
         Spacing(15),
@@ -112,16 +114,19 @@ void MainWindow::setupMainUI() {
         group->addButton(m_loopbackButton);
         group->addButton(m_captureButton);
 
-        Container<QHBoxLayout> *container = new Container<QHBoxLayout>({
-            .alignment = Qt::AlignRight,
-            .children = { m_loopbackButton, m_captureButton }
-        });
-        container->setObjectName("InputModeContainer");
-        return container;
+        return Container(
+            new QWidget(), {
+                .objectName = "InputModeContainer",
+                .layout = Layout<QHBoxLayout>({
+                    .alignment = Qt::AlignRight,
+                    .children = { m_loopbackButton, m_captureButton }
+                })
+            }
+        );
     }();
 
     // Create loopback ui container
-    Container<QVBoxLayout> *loopbackUIContainer = createMainUI(
+    QWidget *loopbackUIContainer = createMainUI(
         new QLabel("Select Input Loopback Device:"),
         m_loopbackUI.inputDropdown,
         m_loopbackUI.outputDropdown,
@@ -134,7 +139,7 @@ void MainWindow::setupMainUI() {
     );
 
     // Create capture ui container
-    Container<QVBoxLayout> *captureUIContainer = createMainUI(
+    QWidget *captureUIContainer = createMainUI(
         new QLabel("Select Input Capture Device:"),
         m_captureUI.inputDropdown,
         m_captureUI.outputDropdown,
@@ -146,13 +151,13 @@ void MainWindow::setupMainUI() {
         m_captureUI.startButton
     );
 
-    QVBoxLayout *UIContainerlayout = loopbackUIContainer->getLayout();
-    UIContainerlayout->setAlignment(Qt::AlignTop);
-    UIContainerlayout->setContentsMargins(10, 5, 10, 10);
+    QLayout *containerlayout = loopbackUIContainer->layout();
+    containerlayout->setAlignment(Qt::AlignTop);
+    containerlayout->setContentsMargins(10, 5, 10, 10);
 
-    UIContainerlayout = captureUIContainer->getLayout();
-    UIContainerlayout->setAlignment(Qt::AlignTop);
-    UIContainerlayout->setContentsMargins(10, 5, 10, 10);
+    containerlayout = captureUIContainer->layout();
+    containerlayout->setAlignment(Qt::AlignTop);
+    containerlayout->setContentsMargins(10, 5, 10, 10);
 
     m_stack = new QStackedLayout();
     m_stack->addWidget(loopbackUIContainer);
@@ -162,7 +167,7 @@ void MainWindow::setupMainUI() {
     m_groupbox->setTitleWidget(inputModeContainer);
     m_groupbox->setLayout(m_stack);
 
-	this->setCentralWidget(new Container<QVBoxLayout>({ Spacing(2), m_groupbox }));
+	this->setCentralWidget(Container<QVBoxLayout>({ Spacing(2), m_groupbox }));
 }
 
 void MainWindow::setupDefaults() {
