@@ -42,18 +42,6 @@ namespace __internal {
 	private:
 		ItemVariant item;
 	};
-
-	struct LayoutArgs {
-		std::optional<QString> objectName = std::nullopt;
-		std::optional<Qt::Alignment> alignment = std::nullopt;
-		std::optional<QBoxLayout::Direction> direction = std::nullopt;
-		std::optional<QLayout::SizeConstraint> sizeConstraint = std::nullopt;
-		std::optional<QMargins> contentsMargins = std::nullopt;
-		std::optional<int> spacing = std::nullopt;
-		std::optional<int> stretch = std::nullopt;
-		QWidget *parent = nullptr;
-		std::initializer_list<__internal::BoxLayoutItem> children;
-	};
 } // namespace __internal
 
 template <__internal::BoxLayoutT T>
@@ -83,39 +71,6 @@ T *Layout(T *layout, std::initializer_list<__internal::BoxLayoutItem> children) 
 }
 
 template <__internal::BoxLayoutT T>
-T *Layout(T *layout, const __internal::LayoutArgs &args) {
-	T *l = Layout<T>(layout, args.children);
-
-	if (args.objectName.has_value()) {
-		l->setObjectName(args.objectName.value());
-	}
-	if (args.alignment.has_value()) {
-		l->setAlignment(args.alignment.value());
-	}
-	if (args.direction.has_value()) {
-		l->setDirection(args.direction.value());
-	}
-	if (args.sizeConstraint.has_value()) {
-		l->setSizeConstraint(args.sizeConstraint.value());
-	}
-	if (args.contentsMargins.has_value()) {
-		l->setContentsMargins(args.contentsMargins.value());
-	}
-	if (args.spacing.has_value()) {
-		l->setSpacing(args.spacing.value());
-	}
-	if (args.stretch.has_value()) {
-		l->setStretchFactor(l, args.stretch.value());
-	}
-	return l;
-}
-
-template <__internal::BoxLayoutT T>
-T *Layout(const __internal::LayoutArgs &args) {
-	return Layout<T>(new T(args.parent), args);
-}
-
-template <__internal::BoxLayoutT T>
 T *Layout(std::initializer_list<__internal::BoxLayoutItem> children) {
 	return Layout<T>(new T(), children);
 }
@@ -125,95 +80,8 @@ T *Layout(QWidget *parent, std::initializer_list<__internal::BoxLayoutItem> chil
 	return Layout<T>(new T(parent), children);
 }
 
-namespace __internal {
-	struct ContainerArgs {
-		std::optional<QString> objectName = std::nullopt;
-		std::optional<QSize> baseSize = std::nullopt;
-		std::optional<QSize> fixedSize = std::nullopt;
-		std::optional<int> fixedWidth = std::nullopt;
-		std::optional<int> fixedHeight = std::nullopt;
-		std::optional<QSize> minimumSize = std::nullopt;
-		std::optional<int> minimumWidth = std::nullopt;
-		std::optional<int> minimumHeight = std::nullopt;
-		std::optional<QSize> maximumSize = std::nullopt;
-		std::optional<int> maximumWidth = std::nullopt;
-		std::optional<int> maximumHeight = std::nullopt;
-		std::optional<QMargins> contentsMargins = std::nullopt;
-		std::optional<QSizePolicy> sizePolicy = std::nullopt;
-		std::optional<QString> tooltip = std::nullopt;
-		std::optional<int> tooltipDuration = std::nullopt;
-		QLayout *layout = nullptr; // Layout for container
-	};
-} // namespace __internal
-
-template <__internal::WidgetT T>
-T *Container(T *widget, const __internal::ContainerArgs &args) {
-	if (args.objectName.has_value()) {
-		widget->setObjectName(args.objectName.value());
-	}
-
-	if (args.baseSize.has_value()) {
-		widget->setBaseSize(args.baseSize.value());
-	}
-	if (args.fixedSize.has_value()) {
-		widget->setFixedSize(args.fixedSize.value());
-	}
-	if (args.fixedWidth.has_value()) {
-		widget->setFixedWidth(args.fixedWidth.value());
-	}
-	if (args.fixedHeight.has_value()) {
-		widget->setFixedHeight(args.fixedHeight.value());
-	}
-	if (args.minimumSize.has_value()) {
-		widget->setMinimumSize(args.minimumSize.value());
-	}
-	if (args.minimumWidth.has_value()) {
-		widget->setMinimumWidth(args.minimumWidth.value());
-	}
-	if (args.minimumHeight.has_value()) {
-		widget->setMinimumHeight(args.minimumHeight.value());
-	}
-	if (args.maximumSize.has_value()) {
-		widget->setMaximumSize(args.maximumSize.value());
-	}
-	if (args.maximumWidth.has_value()) {
-		widget->setMaximumWidth(args.maximumWidth.value());
-	}
-	if (args.maximumHeight.has_value()) {
-		widget->setMaximumHeight(args.maximumHeight.value());
-	}
-
-	if (args.contentsMargins.has_value()) {
-		widget->setContentsMargins(args.contentsMargins.value());
-	}
-	if (args.sizePolicy.has_value()) {
-		widget->setSizePolicy(args.sizePolicy.value());
-	}
-	if (args.tooltip.has_value()) {
-		widget->setToolTip(args.tooltip.value());
-	}
-	if (args.tooltipDuration.has_value()) {
-		widget->setToolTipDuration(args.tooltipDuration.value());
-	}
-
-	if (args.layout != nullptr) {
-		widget->setLayout(args.layout);
-	}
-
-	return widget;
-}
-
 template <__internal::WidgetT T>
 T *Container(T *widget, QLayout *layout) {
-	widget->setLayout(layout);
-	return widget;
-}
-
-template <__internal::BoxLayoutT T>
-QWidget *Container(__internal::LayoutArgs args) {
-	QWidget *widget = new QWidget(args.parent);
-	args.parent = widget;
-	T *layout = Layout<T>(args);
 	widget->setLayout(layout);
 	return widget;
 }
@@ -233,3 +101,67 @@ QWidget *Container(QWidget *parent, std::initializer_list<__internal::BoxLayoutI
 	widget->setLayout(layout);
 	return widget;
 }
+
+template <__internal::BoxLayoutT T>
+T *Layout(T *layout, std::function<void(T *)> func, std::initializer_list<__internal::BoxLayoutItem> children) {
+	Layout<T>(layout, children);
+	func(layout); // invoke callback
+	return layout;
+}
+
+template <__internal::BoxLayoutT T>
+T *Layout(std::function<void(T *)> func, std::initializer_list<__internal::BoxLayoutItem> children) {
+	return Layout<T>(new T(), func, children);
+}
+
+template <__internal::WidgetT T>
+T *Container(T *widget, std::function<void(T *)> func) {
+	func(widget);
+	return widget;
+}
+
+template <__internal::WidgetT T>
+T *Container(T *widget, std::function<void(T *)> func, QLayout *layout) {
+	func(widget);
+	widget->setLayout(layout);
+	return widget;
+}
+
+// --- helpers: token pasting and expansion ---
+#define UIX_PP_CAT(a, b) a##b
+#define UIX_PP_EXPAND(x) x
+
+// --- count __VA_ARGS__ up to 16 ---
+#define UIX_PP_NARGS_IMPL(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, N, ...) N
+#define UIX_PP_NARGS(...) UIX_PP_EXPAND( \
+    UIX_PP_NARGS_IMPL(__VA_ARGS__, \
+        16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0))
+
+// --- apply m(obj, arg) to each arg (1..16) ---
+#define UIX_PP_FOREACH_1(m, obj, a1) m(obj, a1)
+#define UIX_PP_FOREACH_2(m, obj, a1, a2) m(obj,a1) m(obj,a2)
+#define UIX_PP_FOREACH_3(m, obj, a1, a2, a3) m(obj,a1) m(obj,a2) m(obj,a3)
+#define UIX_PP_FOREACH_4(m, obj, a1, a2, a3, a4) m(obj,a1) m(obj,a2) m(obj,a3) m(obj,a4)
+#define UIX_PP_FOREACH_5(m, obj, a1, a2, a3, a4, a5) m(obj,a1) m(obj,a2) m(obj,a3) m(obj,a4) m(obj,a5)
+#define UIX_PP_FOREACH_6(m, obj, a1, a2, a3, a4, a5, a6) m(obj,a1) m(obj,a2) m(obj,a3) m(obj,a4) m(obj,a5) m(obj,a6)
+#define UIX_PP_FOREACH_7(m, obj, a1, a2, a3, a4, a5, a6, a7) m(obj,a1) m(obj,a2) m(obj,a3) m(obj,a4) m(obj,a5) m(obj,a6) m(obj,a7)
+#define UIX_PP_FOREACH_8(m, obj, a1, a2, a3, a4, a5, a6, a7, a8) m(obj,a1) m(obj,a2) m(obj,a3) m(obj,a4) m(obj,a5) m(obj,a6) m(obj,a7) m(obj,a8)
+#define UIX_PP_FOREACH_9(m, obj, a1, a2, a3, a4, a5, a6, a7, a8, a9) m(obj,a1) m(obj,a2) m(obj,a3) m(obj,a4) m(obj,a5) m(obj,a6) m(obj,a7) m(obj,a8) m(obj,a9)
+#define UIX_PP_FOREACH_10(m, obj, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10) m(obj,a1) m(obj,a2) m(obj,a3) m(obj,a4) m(obj,a5) m(obj,a6) m(obj,a7) m(obj,a8) m(obj,a9) m(obj,a10)
+#define UIX_PP_FOREACH_11(m, obj, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11) m(obj,a1) m(obj,a2) m(obj,a3) m(obj,a4) m(obj,a5) m(obj,a6) m(obj,a7) m(obj,a8) m(obj,a9) m(obj,a10) m(obj,a11)
+#define UIX_PP_FOREACH_12(m, obj, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12) m(obj,a1) m(obj,a2) m(obj,a3) m(obj,a4) m(obj,a5) m(obj,a6) m(obj,a7) m(obj,a8) m(obj,a9) m(obj,a10) m(obj,a11) m(obj,a12)
+#define UIX_PP_FOREACH_13(m, obj, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13) m(obj,a1) m(obj,a2) m(obj,a3) m(obj,a4) m(obj,a5) m(obj,a6) m(obj,a7) m(obj,a8) m(obj,a9) m(obj,a10) m(obj,a11) m(obj,a12) m(obj,a13)
+#define UIX_PP_FOREACH_14(m, obj, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14) m(obj,a1) m(obj,a2) m(obj,a3) m(obj,a4) m(obj,a5) m(obj,a6) m(obj,a7) m(obj,a8) m(obj,a9) m(obj,a10) m(obj,a11) m(obj,a12) m(obj,a13) m(obj,a14)
+#define UIX_PP_FOREACH_15(m, obj, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15) m(obj,a1) m(obj,a2) m(obj,a3) m(obj,a4) m(obj,a5) m(obj,a6) m(obj,a7) m(obj,a8) m(obj,a9) m(obj,a10) m(obj,a11) m(obj,a12) m(obj,a13) m(obj,a14) m(obj,a15)
+#define UIX_PP_FOREACH_16(m, obj, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16) m(obj,a1) m(obj,a2) m(obj,a3) m(obj,a4) m(obj,a5) m(obj,a6) m(obj,a7) m(obj,a8) m(obj,a9) m(obj,a10) m(obj,a11) m(obj,a12) m(obj,a13) m(obj,a14) m(obj,a15) m(obj,a16)
+
+#define UIX_PP_FOREACH_N(n, m, obj, ...) UIX_PP_EXPAND(UIX_PP_CAT(UIX_PP_FOREACH_, n)(m, obj, __VA_ARGS__))
+#define UIX_PP_FOREACH(m, obj, ...) UIX_PP_FOREACH_N(UIX_PP_NARGS(__VA_ARGS__), m, obj, __VA_ARGS__)
+
+// --- turn "foo(args...)" into "obj->foo(args...);" ---
+#define UIX_PP_MEMBER_CALL(obj, call) obj->call;
+
+// --- public macro: produces a generic-lambda that applies each call to obj ---
+#define APPLY(...) ([](auto *obj) { UIX_PP_FOREACH(UIX_PP_MEMBER_CALL, obj, __VA_ARGS__) })
+#define APPLY_REF(...) ([&](auto *obj) { UIX_PP_FOREACH(UIX_PP_MEMBER_CALL, obj, __VA_ARGS__) })
+#define APPLY_WITH(capture, ...) ([capture](auto *obj) { UIX_PP_FOREACH(UIX_PP_MEMBER_CALL, obj, __VA_ARGS__) })

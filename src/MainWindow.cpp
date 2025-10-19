@@ -56,45 +56,45 @@ static QWidget *createMainUI(
     _Out_ QPushButton *&startButton
 ) {
     return Container<QVBoxLayout>({
-        Container(inputLabel, {
-            .contentsMargins = QMargins(4, 0, 0, 2)
-        }),
+        Container<QLabel>(
+            inputLabel,
+            APPLY(setContentsMargins(4, 0, 0, 2))
+        ),
         inputDropdown = new QComboBox(),
         Spacing(5),
-        Container(
-            new QLabel("Select Output Playback Device:"), {
-            .contentsMargins = QMargins(4, 0, 0, 2)
-        }),
+        Container<QLabel>(
+            new QLabel("Select Output Playback Device:"),
+            APPLY(setContentsMargins(4, 0, 0, 2))
+        ),
         outputDropdown = new QComboBox(),
         Spacing(15),
-        Layout<QVBoxLayout>({
-            .contentsMargins = QMargins(5, 0, 0, 0),
-            .children = {
-                Layout<QHBoxLayout>({
-                    new QLabel("Sample Rate:"), 
-                    sampleRateDropdown = new QComboBox()
-                }),
-                Layout<QHBoxLayout>({
-                    new QLabel("Format:"), 
-                    formatDropdown = new QComboBox()
-                }),
-                Layout<QHBoxLayout>({
-                    new QLabel("Volume Boost:"),
-                    volumeBoostDropdown = new QComboBox()
-                }),
-                Spacing(15),
-                Layout<QHBoxLayout>({
-                    new QLabel("Volume:"),
-                    [&]() {
-                        volumeSlider = new SmoothSlider(Qt::Horizontal);
-                        volumeSlider->setRange(0, 100);
-                        volumeSlider->setValue(100);
-                        volumeSlider->setSingleStep(2);
-                        return volumeSlider;
-                    }(),
-                    volumeLabel = new QLabel("100%")
-                })
-            },
+        Layout<QVBoxLayout>(APPLY(
+            setContentsMargins(5, 0, 0, 0)
+        ), {
+            Layout<QHBoxLayout>({
+                new QLabel("Sample Rate:"), 
+                sampleRateDropdown = new QComboBox()
+            }),
+            Layout<QHBoxLayout>({
+                new QLabel("Format:"), 
+                formatDropdown = new QComboBox()
+            }),
+            Layout<QHBoxLayout>({
+                new QLabel("Volume Boost:"),
+                volumeBoostDropdown = new QComboBox()
+            }),
+            Spacing(15),
+            Layout<QHBoxLayout>({
+                new QLabel("Volume:"),
+                [&]() {
+                    volumeSlider = new SmoothSlider(Qt::Horizontal);
+                    volumeSlider->setRange(0, 100);
+                    volumeSlider->setValue(100);
+                    volumeSlider->setSingleStep(2);
+                    return volumeSlider;
+                }(),
+                volumeLabel = new QLabel("100%")
+            })
         }),
         Spacing(15),
         Stretch(1), startButton = new QPushButton("Start")
@@ -114,14 +114,13 @@ void MainWindow::setupMainUI() {
         group->addButton(m_loopbackButton);
         group->addButton(m_captureButton);
 
-        return Container(
-            new QWidget(), {
-                .objectName = "InputModeContainer",
-                .layout = Layout<QHBoxLayout>({
-                    .alignment = Qt::AlignRight,
-                    .children = { m_loopbackButton, m_captureButton }
-                })
-            }
+        return Container<QWidget>(
+            new QWidget(),
+            APPLY(setObjectName("InputModeContainer")),                
+            Layout<QHBoxLayout>(
+                APPLY(setAlignment(Qt::AlignRight)),
+                { m_loopbackButton, m_captureButton }
+            )
         );
     }();
 
