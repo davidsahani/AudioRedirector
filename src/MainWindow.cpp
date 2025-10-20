@@ -58,18 +58,18 @@ static QWidget *createMainUI(
     return Container<QVBoxLayout>(
         Container<QLabel>(
             inputLabel,
-            APPLY(setContentsMargins(4, 0, 0, 2))
+            APPLY_EX(setContentsMargins(4, 0, 0, 2))
         ),
         inputDropdown = new QComboBox(),
         Spacing(5),
         Container<QLabel>(
             new QLabel("Select Output Playback Device:"),
-            APPLY(setContentsMargins(4, 0, 0, 2))
+            APPLY_EX(setContentsMargins(4, 0, 0, 2))
         ),
         outputDropdown = new QComboBox(),
         Spacing(15),
         Layout<QVBoxLayout>(
-            APPLY(setContentsMargins(5, 0, 0, 0)),
+            APPLY_EX(setContentsMargins(5, 0, 0, 0)),
 
             Layout<QHBoxLayout>(
                 new QLabel("Sample Rate:"), 
@@ -88,7 +88,7 @@ static QWidget *createMainUI(
                 new QLabel("Volume:"),
                 Container<SmoothSlider>(
                     volumeSlider = new SmoothSlider(Qt::Horizontal),
-                    APPLY(setRange(0, 100), setValue(100), setSingleStep(2))
+                    APPLY_EX(setRange(0, 100), setValue(100), setSingleStep(2))
                 ),
                 volumeLabel = new QLabel("100%")
             )
@@ -113,9 +113,9 @@ void MainWindow::setupMainUI() {
 
         return Container<QWidget>(
             new QWidget(),
-            APPLY(setObjectName("InputModeContainer")),
+            APPLY_EX(setObjectName("InputModeContainer")),
             Layout<QHBoxLayout>(
-                APPLY(setAlignment(Qt::AlignRight)),
+                APPLY_EX(setAlignment(Qt::AlignRight)),
                 m_loopbackButton, m_captureButton
             )
         );

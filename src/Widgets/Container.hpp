@@ -142,6 +142,6 @@ T *Container(T *widget, std::function<void(T *)> callable, QLayout *layout) {
 #define UIX_PP_MEMBER_CALL(obj, call) obj->call;
 
 // --- public macro: produces a generic-lambda that applies each call to obj ---
-#define APPLY(...) ([](auto *obj) { UIX_PP_FOREACH(UIX_PP_MEMBER_CALL, obj, __VA_ARGS__) })
-#define APPLY_REF(...) ([&](auto *obj) { UIX_PP_FOREACH(UIX_PP_MEMBER_CALL, obj, __VA_ARGS__) })
-#define APPLY_WITH(capture, ...) ([capture](auto *obj) { UIX_PP_FOREACH(UIX_PP_MEMBER_CALL, obj, __VA_ARGS__) })
+#define APPLY_EX(...) ([](auto *obj) { UIX_PP_FOREACH(UIX_PP_MEMBER_CALL, obj, __VA_ARGS__) })
+#define APPLY_EX_REF(...) ([&](auto *obj) { UIX_PP_FOREACH(UIX_PP_MEMBER_CALL, obj, __VA_ARGS__) })
+#define APPLY_EX_WITH(capture, ...) ([capture](auto *obj) { UIX_PP_FOREACH(UIX_PP_MEMBER_CALL, obj, __VA_ARGS__) })
