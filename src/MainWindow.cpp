@@ -55,7 +55,7 @@ static QWidget *createMainUI(
     _Out_ QLabel *&volumeLabel,
     _Out_ QPushButton *&startButton
 ) {
-    return Container<QVBoxLayout>({
+    return Container<QVBoxLayout>(
         Container<QLabel>(
             inputLabel,
             APPLY(setContentsMargins(4, 0, 0, 2))
@@ -68,37 +68,34 @@ static QWidget *createMainUI(
         ),
         outputDropdown = new QComboBox(),
         Spacing(15),
-        Layout<QVBoxLayout>(APPLY(
-            setContentsMargins(5, 0, 0, 0)
-        ), {
-            Layout<QHBoxLayout>({
+        Layout<QVBoxLayout>(
+            APPLY(setContentsMargins(5, 0, 0, 0)),
+
+            Layout<QHBoxLayout>(
                 new QLabel("Sample Rate:"), 
                 sampleRateDropdown = new QComboBox()
-            }),
-            Layout<QHBoxLayout>({
+            ),
+            Layout<QHBoxLayout>(
                 new QLabel("Format:"), 
                 formatDropdown = new QComboBox()
-            }),
-            Layout<QHBoxLayout>({
+            ),
+            Layout<QHBoxLayout>(
                 new QLabel("Volume Boost:"),
                 volumeBoostDropdown = new QComboBox()
-            }),
+            ),
             Spacing(15),
-            Layout<QHBoxLayout>({
+            Layout<QHBoxLayout>(
                 new QLabel("Volume:"),
-                [&]() {
-                    volumeSlider = new SmoothSlider(Qt::Horizontal);
-                    volumeSlider->setRange(0, 100);
-                    volumeSlider->setValue(100);
-                    volumeSlider->setSingleStep(2);
-                    return volumeSlider;
-                }(),
+                Container<SmoothSlider>(
+                    volumeSlider = new SmoothSlider(Qt::Horizontal),
+                    APPLY(setRange(0, 100), setValue(100), setSingleStep(2))
+                ),
                 volumeLabel = new QLabel("100%")
-            })
-        }),
+            )
+        ),
         Spacing(15),
         Stretch(1), startButton = new QPushButton("Start")
-    });
+    );
 }
 
 void MainWindow::setupMainUI() {
@@ -116,10 +113,10 @@ void MainWindow::setupMainUI() {
 
         return Container<QWidget>(
             new QWidget(),
-            APPLY(setObjectName("InputModeContainer")),                
+            APPLY(setObjectName("InputModeContainer")),
             Layout<QHBoxLayout>(
                 APPLY(setAlignment(Qt::AlignRight)),
-                { m_loopbackButton, m_captureButton }
+                m_loopbackButton, m_captureButton
             )
         );
     }();
@@ -166,7 +163,7 @@ void MainWindow::setupMainUI() {
     m_groupbox->setTitleWidget(inputModeContainer);
     m_groupbox->setLayout(m_stack);
 
-	this->setCentralWidget(Container<QVBoxLayout>({ Spacing(2), m_groupbox }));
+	this->setCentralWidget(Container<QVBoxLayout>( Spacing(2), m_groupbox ));
 }
 
 void MainWindow::setupDefaults() {

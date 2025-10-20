@@ -3,7 +3,6 @@
 #include <variant>
 #include <type_traits>
 #include <initializer_list>
-#include <optional>
 
 #include <QWidget>
 #include <QBoxLayout>
@@ -22,62 +21,62 @@ namespace __internal {
 	concept LayoutT = std::derived_from<T, QLayout>;
 
 	template <typename T>
-	concept BoxLayoutT = std::derived_from<T, QBoxLayout>;
-
-	template <typename T>
 	concept WidgetT = std::derived_from<T, QWidget>;
 
-	class BoxLayoutItem {
-	public:
-		using ItemVariant = std::variant<QWidget *, QLayout *, QLayoutItem *, Spacing, Stretch>;
+	inline void addChild(QLayout *layout, QWidget *widget) {
+		layout->addWidget(widget);
+	}
+	inline void addChild(QBoxLayout *layout, QLayout *sublayout) {
+		layout->addLayout(sublayout);
+	}
+	inline void addChild(QLayout *layout, QLayoutItem *item) {
+		layout->addItem(item);
+	}
+	inline void addChild(QBoxLayout *layout, Spacing spacing) {
+		layout->addSpacing(spacing.size);
+	}
+	inline void addChild(QBoxLayout *layout, Stretch stretch) {
+		layout->addStretch(stretch.factor);
+	}
 
-		BoxLayoutItem(QWidget *w) : item(w) {}
-		BoxLayoutItem(QLayout *l) : item(l) {}
-		BoxLayoutItem(QLayoutItem *i) : item(i) {}
-		BoxLayoutItem(Spacing sp) : item(sp) {}
-		BoxLayoutItem(Stretch st) : item(st) {}
-
-		const ItemVariant &get() const { return item; }
-
-	private:
-		ItemVariant item;
+	// Concept that checks whether addChild(layout, arg) is valid for the Layout type.
+	template <typename T, typename Arg>
+	concept AddableToLayout = requires(T *l, Arg &&a) {
+		// expression must be valid
+		addChild(l, std::forward<Arg>(a));
 	};
 } // namespace __internal
 
-template <__internal::BoxLayoutT T>
-T *Layout(T *layout, std::initializer_list<__internal::BoxLayoutItem> children) {
-	for (auto &child : children) {
-		std::visit(
-			[&](auto &&ptr) {
-				using T = std::decay_t<decltype(ptr)>;
-				if constexpr (std::is_same_v<T, QWidget *>) {
-					if (ptr) layout->addWidget(ptr);
-				} else if constexpr (std::is_same_v<T, QLayout *>) {
-					if (ptr) layout->addLayout(ptr);
-				} else if constexpr (std::is_same_v<T, QSpacerItem *>) {
-					if (ptr) layout->addItem(ptr);
-				} else if constexpr (std::is_same_v<T, Spacing>) {
-					layout->addSpacing(ptr.size);
-				} else if constexpr (std::is_same_v<T, Stretch>) {
-					layout->addStretch(ptr.factor);
-				}
-			},
-			child.get()
-		);
-	}
+template <__internal::LayoutT T, typename... Args>
+	requires(__internal::AddableToLayout<T, Args> && ...)
+T *Layout(T *layout, Args &&...children) {
+	assert(layout != nullptr && "Layout: layout pointer must not be null");
+
+	// Call the corresponding addChild for each argument
+	((__internal::addChild(layout, std::forward<Args>(children))), ...);
 
 	layout->setContentsMargins(0, 0, 0, 0);
 	return layout;
 }
 
-template <__internal::BoxLayoutT T>
-T *Layout(std::initializer_list<__internal::BoxLayoutItem> children) {
-	return Layout<T>(new T(), children);
+template <__internal::LayoutT T, typename... Args>
+	requires(__internal::AddableToLayout<T, Args> && ...)
+T *Layout(Args &&...children) {
+	return Layout<T>(new T(), children...);
 }
 
-template <__internal::BoxLayoutT T>
-T *Layout(QWidget *parent, std::initializer_list<__internal::BoxLayoutItem> children) {
-	return Layout<T>(new T(parent), children);
+template <__internal::LayoutT T, typename... Args>
+	requires(__internal::AddableToLayout<T, Args> && ...)
+T *Layout(T *layout, std::function<void(T *)> callable, Args &&...children) {
+	Layout<T>(layout, children...);
+	callable(layout); // invoke callback
+	return layout;
+}
+
+template <__internal::LayoutT T, typename... Args>
+	requires(__internal::AddableToLayout<T, Args> && ...)
+T *Layout(std::function<void(T *)> callable, Args &&...children) {
+	return Layout<T>(new T(), callable, children...);
 }
 
 template <__internal::WidgetT T>
@@ -86,43 +85,24 @@ T *Container(T *widget, QLayout *layout) {
 	return widget;
 }
 
-template <__internal::BoxLayoutT T>
-QWidget *Container(std::initializer_list<__internal::BoxLayoutItem> children) {
+template <__internal::LayoutT T, typename... Args>
+	requires(__internal::AddableToLayout<T, Args> && ...)
+QWidget *Container(Args &&...children) {
 	QWidget *widget = new QWidget();
-	T *layout = Layout<T>(widget, children);
-	widget->setLayout(layout);
-	return widget;
-}
-
-template <__internal::BoxLayoutT T>
-QWidget *Container(QWidget *parent, std::initializer_list<__internal::BoxLayoutItem> children) {
-	QWidget *widget = new QWidget(parent);
-	T *layout = Layout<T>(children, widget);
-	widget->setLayout(layout);
-	return widget;
-}
-
-template <__internal::BoxLayoutT T>
-T *Layout(T *layout, std::function<void(T *)> func, std::initializer_list<__internal::BoxLayoutItem> children) {
-	Layout<T>(layout, children);
-	func(layout); // invoke callback
-	return layout;
-}
-
-template <__internal::BoxLayoutT T>
-T *Layout(std::function<void(T *)> func, std::initializer_list<__internal::BoxLayoutItem> children) {
-	return Layout<T>(new T(), func, children);
-}
-
-template <__internal::WidgetT T>
-T *Container(T *widget, std::function<void(T *)> func) {
-	func(widget);
+	T *layout = new T(widget);
+	widget->setLayout(Layout<T>(layout, children...));
 	return widget;
 }
 
 template <__internal::WidgetT T>
-T *Container(T *widget, std::function<void(T *)> func, QLayout *layout) {
-	func(widget);
+T *Container(T *widget, std::function<void(T *)> callable) {
+	callable(widget);
+	return widget;
+}
+
+template <__internal::WidgetT T>
+T *Container(T *widget, std::function<void(T *)> callable, QLayout *layout) {
+	callable(widget);
 	widget->setLayout(layout);
 	return widget;
 }
