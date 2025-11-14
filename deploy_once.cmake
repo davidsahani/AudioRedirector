@@ -10,7 +10,7 @@ message(STATUS "[deploy_once] Running windeployqt...")
 
 # Run windeployqt.exe
 execute_process(
-    COMMAND "${QT_BIN_DIR}/windeployqt.exe"
+    COMMAND "${WINDEPLOYQT_EXE}"
         --no-translations
         --no-system-d3d-compiler
         --no-system-dxc-compiler
@@ -31,4 +31,4 @@ else()
 endif()
 
 string(TIMESTAMP NOW "%Y-%m-%d %H:%M:%S")
-file(WRITE "${MARKER_FILE}" "Deployed at ${NOW}")
+file(WRITE "${MARKER_FILE}" "deployment timestamp: ${NOW}")
