@@ -1,4 +1,4 @@
-# 🔊 Audio Redirector: Redirect audio from one device to another
+## 🔊 Audio Redirector: Redirect audio from one device to another
 
 **Audio Redirector** is a simple application that lets you redirect audio from a capture or loopback device to any playback device.  
 
