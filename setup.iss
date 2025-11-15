@@ -1,5 +1,5 @@
 #define AppName "AudioRedirector"
-#define AppVersion "0.1.0"
+#define AppVersion "0.2.0"
 #define AppPublisher "davidsahani@github.com"
 #define AppURL "https://github.com/davidsahani/AudioRedirector"
 #define AppExeName AppName + ".exe"
