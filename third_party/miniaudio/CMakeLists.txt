@@ -9,4 +9,4 @@ add_library(miniaudio STATIC
 target_include_directories(miniaudio PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 # set a standalone version
-set_target_properties(miniaudio PROPERTIES VERSION 0.11.22)
+set_target_properties(miniaudio PROPERTIES VERSION 0.11.23)
