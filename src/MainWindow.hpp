@@ -10,8 +10,8 @@ class MainViewModel;
 class MainWindow : public QMainWindow {
 	Q_OBJECT
 
-public:
-	MainWindow();
+protected:
+	void showEvent(QShowEvent *event) override;
 
 private:
 	void setupMainUI();

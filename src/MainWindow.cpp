@@ -3,18 +3,16 @@
 #include <QVBoxLayout>
 #include <QButtonGroup>
 #include <QMessageBox>
-#include <QTimer>
 
 #include "Container.hpp"
 #include "MainViewModel.hpp"
 
-MainWindow::MainWindow() : QMainWindow() {
-	this->setupMainUI();    // setup UI widgets
-	this->connectSignals(); // connect signals and slots
+void MainWindow::showEvent(QShowEvent *event) {
+    QMainWindow::showEvent(event);
 
-	QTimer::singleShot(250, this, [this]() {
-		m_viewModel->loadDevices();
-	});
+	this->setupMainUI();
+	this->connectSignals();
+	m_viewModel->loadDevices();
 }
 
 void MainWindow::setupMainUI() {
@@ -40,22 +38,25 @@ void MainWindow::setupMainUI() {
 		);
 	}();
 
-	MainUIState loopbackUIState;
-	MainUIState captureUIState;
+	m_groupbox = new CustomGroupBox();
+	m_groupbox->setTitleWidget(inputModeContainer);
+
+	MainUIState loopbackUIState, captureUIState;
 	loopbackUIState.inputLabel = new QLabel("Select Input Playback Device:");
 	captureUIState.inputLabel = new QLabel("Select Input Capture Device:");
 
 	QWidget *loopbackView = CreateMainView(loopbackUIState);
 	QWidget *captureView = CreateMainView(captureUIState);
 
+	// Parent it to prevent flickering on initial show
+	loopbackView->setParent(m_groupbox);
+	captureView->setParent(m_groupbox);
+
 	m_viewModel = new MainViewModel(loopbackUIState, captureUIState, this);
 
 	m_stack = new QStackedLayout();
 	m_stack->addWidget(loopbackView);
 	m_stack->addWidget(captureView);
-
-	m_groupbox = new CustomGroupBox();
-	m_groupbox->setTitleWidget(inputModeContainer);
 	m_groupbox->setLayout(m_stack);
 
 	// Set default input mode to capture
