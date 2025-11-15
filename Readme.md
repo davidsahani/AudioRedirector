@@ -14,16 +14,6 @@
 
 ---
 
-### ⚠️ Known Issue
-
-**StartRedirection fails often**: The current solution is to **keep trying until it starts**.  
-
-The issue appears to be related to the [miniaudio](https://github.com/mackron/miniaudio) backend, which is currently difficult for me to spare effort for diagnosing the issue.
-
-For a more reliable solution, I may have to consider **implementing redirection directly using native audio APIs**.
-
----
-
 ## ✅ Prerequisites
 
 Before building this project, ensure the following are installed:
