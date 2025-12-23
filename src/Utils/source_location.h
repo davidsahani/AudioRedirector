@@ -17,14 +17,14 @@ _STL_DISABLE_CLANG_WARNINGS
 #pragma push_macro("new")
 #undef new
 
-#ifndef _USE_DETAILED_FUNCTION_NAME_IN_SOURCE_LOCATION
-#define _USE_DETAILED_FUNCTION_NAME_IN_SOURCE_LOCATION 1
-#endif // ^^^ !defined(_USE_DETAILED_FUNCTION_NAME_IN_SOURCE_LOCATION) ^^^
+#ifndef _SHOULD_USE_DETAILED_FUNCTION_NAME_IN_SOURCE_LOCATION
+#define _SHOULD_USE_DETAILED_FUNCTION_NAME_IN_SOURCE_LOCATION 1
+#endif // ^^^ !defined(_SHOULD_USE_DETAILED_FUNCTION_NAME_IN_SOURCE_LOCATION) ^^^
 
 _EXPORT_STD struct source_location {
     _NODISCARD static constexpr source_location current(const uint_least32_t _Line_ = __builtin_LINE(),
         const uint_least32_t _Column_ = __builtin_COLUMN(), const char* const _File_ = __builtin_FILE(),
-#if _USE_DETAILED_FUNCTION_NAME_IN_SOURCE_LOCATION
+#if _SHOULD_USE_DETAILED_FUNCTION_NAME_IN_SOURCE_LOCATION
         const char* const _Function_ = __builtin_FUNCSIG()
 #else // ^^^ detailed / basic vvv
         const char* const _Function_ = __builtin_FUNCTION()

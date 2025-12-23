@@ -64,24 +64,27 @@ Result<AudioDevices, Error> AudioRedirector::GetAudioDevices() {
     );
 
     if (result != MA_SUCCESS) {
-        return result::Err(Error(std::format(
-            "Failed to get devices list ({}).", ma::convert::to_string(result)
-        )));
+        return Error(std::format(
+            "Failed to get devices list ({}).",
+            ma::convert::to_string(result)
+        ));
     }
 
-    return result::Ok(devices);
+    return devices;
 }
 
 Result<float, Error> AudioRedirector::GetPlaybackVolume() {
     float volume = 0.0f;
-    ma_result result = ma_device_get_master_volume(&internal::playbackDevice, &volume);
+    ma_result result = ma_device_get_master_volume(
+        &internal::playbackDevice, &volume
+    );
     if (result != MA_SUCCESS) {
-        return result::Err(Error(std::format(
-            "Failed to get playback device volume ({}).", ma::convert::to_string(result)
-        )));
+        return Error(std::format(
+            "Failed to get playback device volume ({}).",
+            ma::convert::to_string(result)
+        ));
     }
-
-    return result::Ok(volume);
+    return volume;
 }
 
 ma_result AudioRedirector::SetPlaybackVolume(float volume) {
@@ -90,14 +93,16 @@ ma_result AudioRedirector::SetPlaybackVolume(float volume) {
 
 Result<float, Error> AudioRedirector::GetDuplexVolume() {
     float volume = 0.0f;
-    ma_result result = ma_device_get_master_volume(&internal::duplexDevice, &volume);
+    ma_result result = ma_device_get_master_volume(
+        &internal::duplexDevice, &volume
+    );
     if (result != MA_SUCCESS) {
-        return result::Err(Error(std::format(
-            "Failed to get duplex device volume ({}).", ma::convert::to_string(result)
-        )));
+        return Error(std::format(
+            "Failed to get duplex device volume ({}).",
+            ma::convert::to_string(result)
+        ));
     }
-
-    return result::Ok(volume);
+    return volume;
 }
 
 ma_result AudioRedirector::SetDuplexVolume(float volume) {
@@ -114,12 +119,13 @@ ResultVoid AudioRedirector::Initialize()
     ma_result result = ma_context_init(nullptr, 0, nullptr, &internal::context);
 
     if (result != MA_SUCCESS) {
-        return result::Err(Error(std::format(
-            "Failed to initialize miniaudio context ({}).", ma::convert::to_string(result)
-        )));
+        return Error(std::format(
+            "Failed to initialize miniaudio context ({}).",
+            ma::convert::to_string(result)
+        ));
     }
 
-    return result::Ok(std::monostate{});
+    return std::monostate{};
 }
 
 ResultVoid AudioRedirector::Uninitialize()
@@ -129,12 +135,13 @@ ResultVoid AudioRedirector::Uninitialize()
 
     ma_result result = ma_context_uninit(&internal::context);
     if (result != MA_SUCCESS) {
-        return result::Err(Error(std::format(
-            "Failed to uninitialize miniaudio context ({}).", ma::convert::to_string(result)
-        )));
+        return Error(std::format(
+            "Failed to uninitialize miniaudio context ({}).",
+            ma::convert::to_string(result)
+        ));
     }
 
-    return result::Ok(std::monostate{});
+    return std::monostate{};
 }
 
 ResultVoid AudioRedirector::StartLoopbackRedirect(const ma_device_id *loopbackId, const ma_device_id *playbackId)
@@ -142,19 +149,20 @@ ResultVoid AudioRedirector::StartLoopbackRedirect(const ma_device_id *loopbackId
     ma_result result = internal::init_loopback_device(loopbackId);
 
     if (result != MA_SUCCESS) {
-        return result::Err(Error(std::format(
-            "Failed to initialize loopback device ({}).", ma::convert::to_string(result)
-        )));
+        return Error(std::format(
+            "Failed to initialize loopback device ({}).",
+            ma::convert::to_string(result)
+        ));
     }
 
     result = internal::init_playback_device(playbackId);
 
     if (result != MA_SUCCESS) {
         ma_device_uninit(&internal::loopbackDevice);
-
-        return result::Err(Error(std::format(
-            "Failed to initialize playback device ({}).", ma::convert::to_string(result)
-        )));
+        return Error(std::format(
+            "Failed to initialize playback device ({}).",
+            ma::convert::to_string(result)
+        ));
     }
 
     // Init ring buffer (1 second at 48kHz, stereo)
@@ -171,9 +179,10 @@ ResultVoid AudioRedirector::StartLoopbackRedirect(const ma_device_id *loopbackId
         ma_device_uninit(&internal::loopbackDevice);
         ma_device_uninit(&internal::playbackDevice);
 
-        return result::Err(Error(std::format(
-            "Failed to initialize ring buffer ({}).", ma::convert::to_string(result)
-        )));
+        return Error(std::format(
+            "Failed to initialize ring buffer ({}).",
+            ma::convert::to_string(result)
+        ));
     }
 
     const ma_result loopback_result = ma_device_start(&internal::loopbackDevice);
@@ -184,14 +193,14 @@ ResultVoid AudioRedirector::StartLoopbackRedirect(const ma_device_id *loopbackId
         ma_device_uninit(&internal::playbackDevice);
         ma_pcm_rb_uninit(&internal::ringBuffer);
 
-        return result::Err(Error(std::format(
+        return Error(std::format(
             "Failed to start {} device ({}).",
             (loopback_result != MA_SUCCESS) ? "loopback" : "playback",
             ma::convert::to_string((loopback_result != MA_SUCCESS) ? loopback_result : playback_result))
-        ));
+        );
     }
 
-    return result::Ok(std::monostate{});
+    return std::monostate{};
 }
 
 ResultVoid AudioRedirector::StopLoopbackRedirect()
@@ -203,9 +212,10 @@ ResultVoid AudioRedirector::StopLoopbackRedirect()
     if (device_state == ma_device_state_started || device_state == ma_device_state_starting) {
         ma_result result = ma_device_stop(&internal::loopbackDevice);
         if (result != MA_SUCCESS) {
-            return result::Err(Error(std::format(
-                "Failed to stop input device ({}).", ma::convert::to_string(result)
-            )));
+            return Error(std::format(
+                "Failed to stop input device ({}).",
+                ma::convert::to_string(result)
+            ));
         }
     }
 
@@ -220,9 +230,10 @@ ResultVoid AudioRedirector::StopLoopbackRedirect()
     if (device_state == ma_device_state_started || device_state == ma_device_state_starting) {
         ma_result result = ma_device_stop(&internal::playbackDevice);
         if (result != MA_SUCCESS) {
-            return result::Err(Error(std::format(
-                "Failed to stop playback device ({}).", ma::convert::to_string(result)
-            )));
+            return Error(std::format(
+                "Failed to stop playback device ({}).",
+                ma::convert::to_string(result)
+            ));
         }
     }
 
@@ -236,7 +247,7 @@ ResultVoid AudioRedirector::StopLoopbackRedirect()
         ma_pcm_rb_uninit(&internal::ringBuffer);
     }
 
-    return result::Ok(std::monostate{});
+    return std::monostate{};
 }
 
 ResultVoid AudioRedirector::StartDuplexRedirect(const ma_device_id *captureId, const ma_device_id *playbackId)
@@ -249,9 +260,10 @@ ResultVoid AudioRedirector::StartDuplexRedirect(const ma_device_id *captureId, c
     if (device_state == ma_device_state_started || device_state == ma_device_state_starting) {
         ma_result result = ma_device_stop(&internal::duplexDevice);
         if (result != MA_SUCCESS) {
-            return result::Err(Error(std::format(
-                "Failed to stop duplex device ({}).", ma::convert::to_string(result)
-            )));
+            return Error(std::format(
+                "Failed to stop duplex device ({}).",
+                ma::convert::to_string(result)
+            ));
         }
     }
 
@@ -262,9 +274,10 @@ ResultVoid AudioRedirector::StartDuplexRedirect(const ma_device_id *captureId, c
     ma_result result = internal::init_duplex_device(captureId, playbackId);
 
     if (result != MA_SUCCESS) {
-        return result::Err(Error(std::format(
-            "Failed to initialize duplex device ({}).", ma::convert::to_string(result)
-        )));
+        return Error(std::format(
+            "Failed to initialize duplex device ({}).",
+            ma::convert::to_string(result)
+        ));
     }
 
     result = ma_device_start(&internal::duplexDevice);
@@ -272,12 +285,13 @@ ResultVoid AudioRedirector::StartDuplexRedirect(const ma_device_id *captureId, c
     if (result != MA_SUCCESS) {
         ma_device_uninit(&internal::duplexDevice);
 
-        return result::Err(Error(std::format(
-            "Failed to start duplex device ({}).", ma::convert::to_string(result)
-        )));
+        return Error(std::format(
+            "Failed to start duplex device ({}).",
+            ma::convert::to_string(result)
+        ));
     }
 
-    return result::Ok(std::monostate{});
+    return std::monostate{};
 }
 
 ResultVoid AudioRedirector::StopDuplexRedirect()
@@ -287,9 +301,10 @@ ResultVoid AudioRedirector::StopDuplexRedirect()
     if (device_state == ma_device_state_started || device_state == ma_device_state_starting) {
         ma_result result = ma_device_stop(&internal::duplexDevice);
         if (result != MA_SUCCESS) {
-            return result::Err(Error(std::format(
-                "Failed to stop duplex device ({}).", ma::convert::to_string(result)
-            )));
+            return Error(std::format(
+                "Failed to stop duplex device ({}).",
+                ma::convert::to_string(result)
+            ));
         }
     }
 
@@ -297,7 +312,7 @@ ResultVoid AudioRedirector::StopDuplexRedirect()
         ma_device_uninit(&internal::duplexDevice);
     }
 
-    return result::Ok(std::monostate{});
+    return std::monostate{};
 }
 
 ma_result internal::init_loopback_device(const ma_device_id *id) {

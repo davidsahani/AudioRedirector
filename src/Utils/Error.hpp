@@ -3,12 +3,15 @@
 #include <sstream>
 #include <filesystem>
 
-#define _USE_DETAILED_FUNCTION_NAME_IN_SOURCE_LOCATION 0
+#define _SHOULD_USE_DETAILED_FUNCTION_NAME_IN_SOURCE_LOCATION 0
 #include "source_location.h"
 
 struct Error {
 	std::string message;
 	std::string traceback;
+
+	Error(const std::string &msg, const std::string &traceback)
+		: message(msg), traceback(traceback) {}
 
 	Error(const std::string &msg, source_location loc = source_location::current())
 		: message(msg)
