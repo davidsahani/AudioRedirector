@@ -1,12 +1,19 @@
 #pragma once
+#include <format>
+
+#include "Format.hpp"
 #include "Error.hpp"
-#include "Utils.hpp"
 
 namespace error::private_ {
-	Error add_win_error(HRESULT hr, Error error) {
-		error.message += std::format("\nReason: {}", Utils::FormatWinError(hr));
+	static inline Error add_error(DWORD winError, Error error) {
+		error.message += std::format("\nReason: {}", format_win32(winError));
+		return error;
+	}
+
+	static inline Error add_error(HRESULT hr, Error error) {
+		error.message += std::format("\nReason: {}", format_hresult(hr));
 		return error;
 	}
 }; // namespace error::private_
 
-#define WinErr(hr, ...) error::private_::add_win_error(hr, Error(##__VA_ARGS__))
+#define WinErr(e, ...) error::private_::add_error(e, Error(##__VA_ARGS__))

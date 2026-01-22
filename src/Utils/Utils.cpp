@@ -61,28 +61,3 @@ HICON Utils::ExtractDeviceIcon(const std::wstring &iconPath) {
 	ExtractIconExW(file.c_str(), resourceId, nullptr, &hIcon, 1);
 	return hIcon;
 }
-
-std::string Utils::FormatWinError(DWORD winError) {
-	LPSTR buffer = NULL;
-
-	DWORD size = FormatMessageA(
-		FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-		NULL,
-		winError,
-		0, // Default language
-		reinterpret_cast<LPSTR>(&buffer),
-		0,
-		NULL
-	);
-
-	if (buffer == NULL) {
-		return std::format("Unknown Error (HRESULT: 0x{:X})", winError);
-	}
-
-	std::string result = std::string(buffer, size);
-	LocalFree(buffer);
-
-	// Trim unwanted spaces and newlines at the end
-	result.erase(result.find_last_not_of(" \n\r\t") + 1);
-	return result;
-}
