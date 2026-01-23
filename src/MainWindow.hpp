@@ -1,14 +1,16 @@
 #pragma once
 #include <QMainWindow>
-#include <QPushButton>
-#include <QStackedLayout>
 
-#include "CustomGroupBox.hpp"
-
+class QPushButton;
+class QStackedLayout;
+class CustomGroupBox;
 class MainViewModel;
 
 class MainWindow : public QMainWindow {
 	Q_OBJECT
+
+public:
+	explicit MainWindow(QWidget *parent = nullptr);
 
 protected:
 	void showEvent(QShowEvent *event) override;

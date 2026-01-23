@@ -1,17 +1,46 @@
 #include "MainWindow.hpp"
+#include <QPushButton>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
+#include <QStackedLayout>
 #include <QButtonGroup>
 #include <QMessageBox>
 
 #include "Container.hpp"
+#include "CustomGroupBox.hpp"
 #include "MainViewModel.hpp"
+
+MainWindow::MainWindow(QWidget *parent)
+	: QMainWindow(parent)
+{
+	setupMainUI();
+}
 
 void MainWindow::showEvent(QShowEvent *event) {
     QMainWindow::showEvent(event);
 
-	this->setupMainUI();
-	this->connectSignals();
+	MainUIState loopbackUIState, captureUIState;
+	loopbackUIState.inputLabel = new QLabel("Select Input Playback Device:");
+	captureUIState.inputLabel = new QLabel("Select Input Capture Device:");
+
+	QWidget *loopbackView = CreateMainView(loopbackUIState);
+	QWidget *captureView = CreateMainView(captureUIState);
+
+	// Parent it to prevent flickering on initial show
+	loopbackView->setParent(m_groupbox);
+	captureView->setParent(m_groupbox);
+
+	m_viewModel = new MainViewModel(loopbackUIState, captureUIState, this);
+
+	m_stack->addWidget(loopbackView);
+	m_stack->addWidget(captureView);
+
+	// Set default input mode to capture
+	m_captureButton->setChecked(true);
+	m_stack->setCurrentIndex(1);
+	m_groupbox->resizeEvent(nullptr);
+
+	connectSignals();
 	m_viewModel->loadDevices();
 }
 
@@ -41,30 +70,10 @@ void MainWindow::setupMainUI() {
 	m_groupbox = new CustomGroupBox();
 	m_groupbox->setTitleWidget(inputModeContainer);
 
-	MainUIState loopbackUIState, captureUIState;
-	loopbackUIState.inputLabel = new QLabel("Select Input Playback Device:");
-	captureUIState.inputLabel = new QLabel("Select Input Capture Device:");
-
-	QWidget *loopbackView = CreateMainView(loopbackUIState);
-	QWidget *captureView = CreateMainView(captureUIState);
-
-	// Parent it to prevent flickering on initial show
-	loopbackView->setParent(m_groupbox);
-	captureView->setParent(m_groupbox);
-
-	m_viewModel = new MainViewModel(loopbackUIState, captureUIState, this);
-
 	m_stack = new QStackedLayout();
-	m_stack->addWidget(loopbackView);
-	m_stack->addWidget(captureView);
 	m_groupbox->setLayout(m_stack);
 
-	// Set default input mode to capture
-	m_captureButton->setChecked(true);
-	m_stack->setCurrentIndex(1);
-	m_groupbox->resizeEvent(nullptr);
-
-	this->setCentralWidget(Container<QVBoxLayout>(Spacing(2), m_groupbox));
+	setCentralWidget(Container<QVBoxLayout>(Spacing(2), m_groupbox));
 }
 
 void MainWindow::connectSignals() {
